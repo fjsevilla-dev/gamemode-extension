@@ -17,10 +17,13 @@
  * Authors:
  *       Christian J. Kellner <christian@kellner.me>
  */
+ 
 
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const Lang = imports.lang;
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+
+// Signals is not available as an ECMAScript Module, at least for now
+// https://gitlab.gnome.org/GNOME/gjs/-/blob/master/modules/core/_signals.js
 const Signals = imports.signals;
 
 
@@ -43,7 +46,7 @@ const GAMEMODE_DBUS_NAME = 'com.feralinteractive.GameMode';
 const GAMEMODE_DBUS_IFACE = 'com.feralinteractive.GameMode';
 const GAMEMODE_DBUS_PATH = '/com/feralinteractive/GameMode';
 
-var Client = class {
+export var Client = class {
 
     constructor(readyCallback) {
         this._readyCallback = readyCallback;
@@ -142,4 +145,3 @@ var Client = class {
 };
 
 Signals.addSignalMethods(Client.prototype);
-
