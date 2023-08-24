@@ -1,36 +1,27 @@
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
+import Gdk from 'gi://Gdk';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk'
 
-const Config = imports.misc.config;
-const [major] = Config.PACKAGE_VERSION.split('.');
-const shellVersion = Number.parseInt(major);
-
-const {Gdk, Gio, GObject, Gtk} = imports.gi;
-const Adw = shellVersion >= 42 ? imports.gi.Adw : null;
-
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 var GameModeSettings = GObject.registerClass(class GameModePrefWidget extends Gtk.ListBox {
 
-    _init(params) {
+    _init(settings, params) {
         super._init(params);
         this.selection_mode = Gtk.SelectionMode.NONE;
-        this._settings = ExtensionUtils.getSettings();
+        this._settings = settings;
         this._blocked = [];
-
-        if (shellVersion < 40) {
-            this.margin = 24;
-            this.add(this.make_row_switch('emit-notifications'));
-            this.add(this.make_row_switch('always-show-icon'));
-            this.add(this.make_row_switch('active-tint', 'active-color'));
-        } else {
-            this.margin_start = 24;
-            this.margin_end = 24;
-            this.margin_top = 24;
-            this.margin_bottom = 24;
-            this.append(this.make_row_switch('emit-notifications'));
-            this.append(this.make_row_switch('always-show-icon'));
-            this.append(this.make_row_switch('active-tint', 'active-color'));
-        }
+        
+        this.margin_start = 24;
+        this.margin_end = 24;
+        this.margin_top = 24;
+        this.margin_bottom = 24;
+        
+        this.append(this.make_row_switch('emit-notifications'));
+        this.append(this.make_row_switch('always-show-icon'));
+        this.append(this.make_row_switch('active-tint', 'active-color'));
     }
 
     make_row_switch(name, color) {
@@ -42,23 +33,15 @@ var GameModeSettings = GObject.registerClass(class GameModePrefWidget extends Gt
             orientation: Gtk.Orientation.HORIZONTAL,
         });
 
-        if (shellVersion < 40) {
-            row.add(hbox);
-        } else {
-            hbox.margin_start = 12;
-            hbox.margin_end = 12;
-            hbox.margin_top = 12;
-            hbox.margin_bottom = 12;
-            row.child = hbox;
-        }
+        hbox.margin_start = 12;
+        hbox.margin_end = 12;
+        hbox.margin_top = 12;
+        hbox.margin_bottom = 12;
+        row.child = hbox;
 
         let vbox = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL});
 
-        if (shellVersion < 40) {
-            hbox.pack_start(vbox, true, true, 6);
-        } else {
-            hbox.append(vbox);
-        }
+        hbox.append(vbox);
 
         let sw = new Gtk.Switch({valign: Gtk.Align.CENTER});
 
@@ -79,13 +62,9 @@ var GameModeSettings = GObject.registerClass(class GameModePrefWidget extends Gt
                 this._update_color_from_setting(button, color);
             });
 
-            if (shellVersion < 40) {
-                hbox.pack_start(button, false, false, 6);
-            } else {
-                button.margin_start = 6;
-                button.margin_end = 6;
-                hbox.append(button);
-            }
+            button.margin_start = 6;
+            button.margin_end = 6;
+            hbox.append(button);
 
             sw.bind_property('active', button, 'sensitive',
                              GObject.BindingFlags.SYNC_CREATE);
@@ -94,12 +73,8 @@ var GameModeSettings = GObject.registerClass(class GameModePrefWidget extends Gt
             button.set_tooltip_markup(ckey.get_description());
         }
 
-        if (shellVersion < 40) {
-            hbox.pack_start(sw, false, false, 0);
-        } else {
-            hbox.append(sw);
-        }
-
+        hbox.append(sw);
+        
         let key = schema.get_key(name);
 
         let summary = new Gtk.Label({
@@ -108,13 +83,8 @@ var GameModeSettings = GObject.registerClass(class GameModePrefWidget extends Gt
             halign: Gtk.Align.START,
             use_markup: true
         });
-
-        if (shellVersion < 40) {
-            vbox.pack_start(summary, false, false, 0);
-        } else {
-            vbox.append(summary);
-        }
-
+        vbox.append(summary);
+            
         let description = new Gtk.Label({
             label: `<span size='small'>${key.get_description()}</span>`,
             hexpand: true,
@@ -122,13 +92,8 @@ var GameModeSettings = GObject.registerClass(class GameModePrefWidget extends Gt
             use_markup: true
         });
         description.get_style_context().add_class('dim-label');
-
-        if (shellVersion < 40) {
-            vbox.pack_start(description, false, false, 0);
-        } else {
-            vbox.append(description);
-        }
-
+        vbox.append(description);
+        
         this._settings.bind(name, sw, 'active',
                             Gio.SettingsBindFlags.DEFAULT);
         return row;
@@ -147,9 +112,7 @@ var GameModeSettings = GObject.registerClass(class GameModePrefWidget extends Gt
 });
 
 
-/*Gnome 42 - libadwaita implementation*/
-
-const RowColorButton = shellVersion < 42 ? null : GObject.registerClass(
+const RowColorButton = GObject.registerClass(
     {
         GTypeName: 'RowColorButton',
         Properties: {
@@ -179,7 +142,7 @@ const RowColorButton = shellVersion < 42 ? null : GObject.registerClass(
     });
 
 
-const SwitchActionRow = shellVersion < 42 ? null : GObject.registerClass(
+const SwitchActionRow = GObject.registerClass(
     {
         GTypeName: 'SwitchActionRow',
         Properties: {
@@ -192,9 +155,9 @@ const SwitchActionRow = shellVersion < 42 ? null : GObject.registerClass(
     },
     class SwitchActionRow extends Adw.ActionRow {
 
-        constructor({active_key, ...args}) {  
+        constructor({settings, active_key, ...args}) {  
             super(args);
-            this._settings = ExtensionUtils.getSettings();
+            this._settings = settings;
             this._suffix_container = new Gtk.Box(
                 {orientation: Gtk.Orientation.HORIZONTAL}
             );
@@ -226,7 +189,7 @@ const SwitchActionRow = shellVersion < 42 ? null : GObject.registerClass(
     });
 
 
-const ColorActionRow = shellVersion < 42 ? null : GObject.registerClass(
+const ColorActionRow = GObject.registerClass(
     {
         GTypeName: 'ColorActionRow',
         InternalChilds: ['color_btn'],
@@ -267,32 +230,22 @@ const ColorActionRow = shellVersion < 42 ? null : GObject.registerClass(
     });
 
 
-function init() {
-    ExtensionUtils.initTranslations();
-}
+export default class GamemodePrefs extends ExtensionPreferences {
 
-// Gnome Shell < 42
-function buildPrefsWidget() {
-    let widget = new GameModeSettings();
-
-    if (shellVersion < 40) {
-        widget.show_all();
+    fillPreferencesWindow(window) {
+        window._settings = this.getSettings();
+        
+        let settings_page = Adw.PreferencesPage.new();
+        let main_group = Adw.PreferencesGroup.new();
+    
+        main_group.add(new SwitchActionRow(
+            {settings: window._settings, active_key: 'emit-notifications'}));
+        main_group.add(new SwitchActionRow(
+            {settings: window._settings, active_key: 'always-show-icon'}));
+        main_group.add(new ColorActionRow(
+            {settings: window._settings, active_key: 'active-tint', color_key: 'active-color'}));    
+            
+        settings_page.add(main_group);
+        window.add(settings_page);
     }
-
-    return widget;
 }
-
-// Gnome Shell >= 42
-function fillPreferencesWindow(window) {
-    let settings_page = Adw.PreferencesPage.new();
-    let main_group = Adw.PreferencesGroup.new();
-    
-    main_group.add(new SwitchActionRow({active_key: 'emit-notifications'}));
-    main_group.add(new SwitchActionRow({active_key: 'always-show-icon'}));
-    main_group.add(new ColorActionRow(
-        {active_key: 'active-tint', color_key: 'active-color'}));    
-    
-    settings_page.add(main_group);
-    window.add(settings_page);
-}
-
