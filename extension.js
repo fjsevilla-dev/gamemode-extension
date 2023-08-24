@@ -18,34 +18,29 @@
  *       Christian J. Kellner <christian@kellner.me>
  */
 
-const Clutter = imports.gi.Clutter;
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const Gdk = imports.gi.Gdk;
-const GObject = imports.gi.GObject;
-const Lang = imports.lang;
-const Main = imports.ui.main;
-const MessageTray = imports.ui.messageTray;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const Signals = imports.signals;
-const St = imports.gi.St;
-const Shell = imports.gi.Shell;
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Extension = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Gdk from 'gi://Gdk';
+import GObject from 'gi://GObject';
+import St from 'gi://St'
+import Shell from 'gi://Shell';
 
-const Gettext = imports.gettext.domain(Extension.metadata['gettext-domain']);
-const _ = Gettext.gettext;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-const GameMode = Extension.imports.client;
+import {Extension, gettext as _, ngettext} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+import * as GameMode from './client.js';
 
 /* ui */
 function getStatusText(is_on) {
     if (is_on) {
         return _("GameMode is active");
     }
-
     return _("GameMode is off");
 }
 
@@ -104,7 +99,7 @@ var ClientCountMenuItem = GObject.registerClass(
             if (count === 0) {
                 this._status.text = _("No active clients");
             } else {
-                this._status.text = Gettext.ngettext("%d active client",
+                this._status.text = ngettext("%d active client",
                                                      "%d active clients",
                                                      count).format(count);
             }
@@ -115,9 +110,9 @@ var ClientCountMenuItem = GObject.registerClass(
 var GameModeIndicator = GObject.registerClass(
     class GameModeIndicator extends PanelMenu.Button {
 
-        _init() {
+        _init(settings) {
             super._init(0.0, 'GameMode');
-            this._settings = ExtensionUtils.getSettings();
+            this._settings = settings;
 
             this.connect('destroy', this._onDestroy.bind(this));
 
@@ -266,27 +261,28 @@ var GameModeIndicator = GObject.registerClass(
 
     });
 
-/* entry points */
 
-let indicator = null;
+export default class GamemodeExtension extends Extension {
 
-function init() {
-    ExtensionUtils.initTranslations();
-}
+    _init() {
+        super._init();
+        this._indicator = null;
+    }
 
+    enable() {
+        this._settings = this.getSettings();
+        if (this._indicator)
+            return;
 
-function enable() {
-    if (indicator)
-        return;
-
-    indicator = new GameModeIndicator();
-    Main.panel.addToStatusArea('GameMode', indicator);
-}
-
-function disable() {
-    if (!indicator)
-        return;
-
-    indicator.destroy();
-    indicator = null;
+        this._indicator = new GameModeIndicator(this._settings);
+        Main.panel.addToStatusArea('GameMode', this._indicator);
+    }
+    
+    disable() {
+        if (!this._indicator)
+            return;
+            
+        this._indicator.destroy();
+        this._indicator = null;
+    }
 }
