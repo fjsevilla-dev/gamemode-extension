@@ -19,12 +19,9 @@
  */
 
 import Clutter from 'gi://Clutter';
-import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
 import Gdk from 'gi://Gdk';
 import GObject from 'gi://GObject';
-import St from 'gi://St'
-import Shell from 'gi://Shell';
+import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
@@ -270,8 +267,8 @@ class GameModeIndicator extends PanelMenu.Button {
 
 export default class GamemodeExtension extends Extension {
 
-    _init() {
-        super._init();
+    constructor() {
+        super(...arguments);
         this._indicator = null;
     }
 
