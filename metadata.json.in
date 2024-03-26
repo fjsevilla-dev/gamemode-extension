@@ -3,7 +3,7 @@
   "name": "GameMode",
   "description": "Status indicator for GameMode",
   "uuid": "@UUID@",
-  "shell-version": ["45"],
+  "shell-version": ["45", "46"],
   "version": "@VERSION@",
   "url": "@URL@",
   "original-author": "ckellner@redhat.com",
